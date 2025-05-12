@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Gambling Game</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(to bottom, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            text-align: center;
+        }
+
+        h1 {
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(145deg, #2a3a7c, #3a4a8c);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: transparent;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .cell:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .cell.revealed {
+            background: linear-gradient(145deg, #4a5a9c, #5a6aac);
+            transform: none;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .cell.bomb {
+            background: linear-gradient(145deg, #b21f1f, #c21f1f);
+            color: white;
+        }
+
+        .cell.safe {
+            background: linear-gradient(145deg, #1f9c1f, #2fb42f);
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background: linear-gradient(145deg, #fdbb2d, #ed9b0d);
+            border: none;
+            border-radius: 30px;
+            color: #1a2a6c;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+        }
+
+        .reward {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+        }
+
+        .difficulty-select {
+            margin-bottom: 20px;
+        }
+
+        select {
+            padding: 8px 15px;
+            border-radius: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .game-over-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-over-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .game-over-content {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+        }
+
+        .game-over-title {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #fdbb2d;
+            text-shadow: 0 0 10px rgba(255, 187, 45, 0.7);
+        }
+
+        .explosion {
+            position: absolute;
+            pointer-events: none;
+            animation: explode 1s forwards;
+            z-index: 5;
+        }
+
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            80% { transform: scale(1.5); opacity: 0.7; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+            }
+
+            .cell {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Bomb Gambling Game</h1>
+        
+        <div class="difficulty-select">
+            <select id="difficulty">
+                <option value="easy">Easy (3 bombs)</option>
+                <option value="medium" selected>Medium (5 bombs)</option>
+                <option value="hard">Hard (8 bombs)</option>
+                <option value="insane">Insane (12 bombs)</option>
+            </select>
+        </div>
+
+        <div class="game-info">
+            <div>Balance: <span id="balance">1000</span> coins</div>
+            <div>Bet: <span id="bet">50</span> coins</div>
+        </div>
+
+        <div class="stats">
+            <div>Safe Cells: <span id="safe-count">0</span></div>
+            <div>Multiplier: <span id="multiplier">1.0</span>x</div>
+        </div>
+
+        <div class="grid" id="game-grid"></div>
+
+        <div class="reward">
+            Potential Reward: <span id="reward">0</span> coins
+        </div>
+
+        <div class="controls">
+            <button id="new-game-btn">New Game</button>
+            <button id="cash-out-btn">Cash Out</button>
+        </div>
+
+        <div class="controls">
+            <button id="decrease-bet">- Bet</button>
+            <button id="increase-bet">+ Bet</button>
+        </div>
+    </div>
+
+    <div class="game-over-overlay" id="game-over">
+        <div class="game-over-content">
+            <div class="game-over-title" id="game-over-title">BOOM! You Lost!</div>
+            <p id="game-over-message">You hit a bomb and lost your bet!</p>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game settings
+        const gridSize = 25; // 5x5 grid
+        let bombCount = 5;
+        let balance = 1000;
+        let currentBet = 50;
+        let gameActive = false;
+        let revealedSafe = 0;
+        let maxSafeCells = 0;
+        let bombs = [];
+        let cellsRevealed = [];
+
+        // Get DOM elements
+        const gameGrid = document.getElementById('game-grid');
+        const balanceElement = document.getElementById('balance');
+        const betElement = document.getElementById('bet');
+        const safeCountElement = document.getElementById('safe-count');
+        const multiplierElement = document.getElementById('multiplier');
+        const rewardElement = document.getElementById('reward');
+        const newGameBtn = document.getElementById('new-game-btn');
+        const cashOutBtn = document.getElementById('cash-out-btn');
+        const decreaseBetBtn = document.getElementById('decrease-bet');
+        const increaseBetBtn = document.getElementById('increase-bet');
+        const difficultySelect = document.getElementById('difficulty');
+        const gameOverOverlay = document.getElementById('game-over');
+        const gameOverTitle = document.getElementById('game-over-title');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        // Initialize the game
+        function initGame() {
+            // Clear the grid
+            gameGrid.innerHTML = '';
+            
+            // Set the bomb count based on difficulty
+            switch(difficultySelect.value) {
+                case 'easy':
+                    bombCount = 3;
+                    break;
+                case 'medium':
+                    bombCount = 5;
+                    break;
+                case 'hard':
+                    bombCount = 8;
+                    break;
+                case 'insane':
+                    bombCount = 12;
+                    break;
+            }
+            
+            // Reset variables
+            gameActive = true;
+            revealedSafe = 0;
+            maxSafeCells = gridSize - bombCount;
+            cellsRevealed = [];
+            
+            // Update UI
+            updateMultiplier();
+            updateReward();
+            safeCountElement.textContent = revealedSafe;
+            
+            // Generate bombs
+            generateBombs();
+            
+            // Create grid
+            for (let i = 0; i < gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => revealCell(i));
+                gameGrid.appendChild(cell);
+            }
+        }
+
+        // Generate bomb positions
+        function generateBombs() {
+            bombs = [];
+            while (bombs.length < bombCount) {
+                const position = Math.floor(Math.random() * gridSize);
+                if (!bombs.includes(position)) {
+                    bombs.push(position);
+                }
+            }
+        }
+
+        // Reveal a cell
+        function revealCell(index) {
+            if (!gameActive || cellsRevealed.includes(index)) return;
+            
+            const cell = document.querySelector(`.cell[data-index="${index}"]`);
+            cellsRevealed.push(index);
+            
+            if (bombs.includes(index)) {
+                // It's a bomb
+                cell.classList.add('revealed', 'bomb');
+                cell.textContent = '💣';
+                
+                // Create explosion effect
+                createExplosion(cell);
+                
+                // End game with loss
+                gameOver(false);
+            } else {
+                // It's safe
+                cell.classList.add('revealed', 'safe');
+                cell.textContent = '✓';
+                revealedSafe++;
+                safeCountElement.textContent = revealedSafe;
+                
+                // Update multiplier and potential reward
+                updateMultiplier();
+                updateReward();
+                
+                // Check if all safe cells are revealed
+                if (revealedSafe === maxSafeCells) {
+                    gameOver(true, true);
+                }
+            }
+        }
+
+        // Create explosion effect
+        function createExplosion(cell) {
+            const rect = cell.getBoundingClientRect();
+            const explosion = document.createElement('div');
+            explosion.classList.add('explosion');
+            explosion.style.width = '150px';
+            explosion.style.height = '150px';
+            explosion.style.backgroundColor = 'rgba(255, 100, 50, 0.7)';
+            explosion.style.borderRadius = '50%';
+            explosion.style.left = (rect.left + rect.width / 2 - 75) + 'px';
+            explosion.style.top = (rect.top + rect.height / 2 - 75) + 'px';
+            
+            document.body.appendChild(explosion);
+            
+            setTimeout(() => {
+                explosion.remove();
+            }, 1000);
+        }
+
+        // Update the multiplier
+        function updateMultiplier() {
+            // Base multiplier formula: gridSize / (gridSize - bombCount - revealedSafe)
+            // We add a bit of extra reward for risk-taking
+            let multi = revealedSafe === 0 ? 1 : 
+                         (gridSize / (gridSize - bombCount - revealedSafe)) * (1 + (revealedSafe * 0.1));
+            
+            // Round to 2 decimal places
+            multi = Math.round(multi * 100) / 100;
+            
+            multiplierElement.textContent = multi.toFixed(2);
+            return multi;
+        }
+
+        // Update potential reward
+        function updateReward() {
+            const multi = updateMultiplier();
+            const reward = Math.round(currentBet * multi);
+            rewardElement.textContent = reward;
+            return reward;
+        }
+
+        // Game over
+        function gameOver(win, perfectClear = false) {
+            gameActive = false;
+            
+            if (win) {
+                const reward = updateReward();
+                balance += reward;
+                balanceElement.textContent = balance;
+                
+                // Perfect clear bonus
+                let message = `You won ${reward} coins!`;
+                if (perfectClear) {
+                    const bonus = Math.round(reward * 0.5);
+                    balance += bonus;
+                    balanceElement.textContent = balance;
+                    message = `AMAZING! You cleared all safe cells!<br>You won ${reward} coins + ${bonus} bonus coins!`;
+                    gameOverTitle.textContent = "PERFECT CLEAR!";
+                } else {
+                    gameOverTitle.textContent = "You Won!";
+                }
+                
+                gameOverMessage.innerHTML = message;
+            } else {
+                // Lose
+                balance -= currentBet;
+                balanceElement.textContent = balance;
+                
+                // Show all bombs
+                bombs.forEach(index => {
+                    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                    if (!cellsRevealed.includes(index)) {
+                        cell.classList.add('revealed', 'bomb');
+                        cell.textContent = '💣';
+                    }
+                });
+                
+                gameOverTitle.textContent = "BOOM! You Lost!";
+                gameOverMessage.textContent = `You hit a bomb and lost ${currentBet} coins!`;
+            }
+            
+            // Show game over overlay
+            gameOverOverlay.classList.add('active');
+            
+            // If balance is too low, reset
+            if (balance < 10) {
+                balance = 1000;
+                balanceElement.textContent = balance;
+                gameOverMessage.innerHTML += "<br><br>Your balance was reset to 1000 coins.";
+            }
+        }
+
+        // Cash out
+        function cashOut() {
+            if (!gameActive || revealedSafe === 0) return;
+            
+            gameOver(true);
+        }
+
+        // Change bet
+        function changeBet(amount) {
+            currentBet = Math.max(10, Math.min(Math.min(balance, 1000), currentBet + amount));
+            betElement.textContent = currentBet;
+            
+            if (gameActive) {
+                updateReward();
+            }
+        }
+
+        // Event listeners
+        newGameBtn.addEventListener('click', () => {
+            if (balance < currentBet) {
+                if (balance < 10) {
+                    balance = 1000;
+                    balanceElement.textContent = balance;
+                } else {
+                    currentBet = balance;
+                    betElement.textContent = currentBet;
+                }
+            }
+            initGame();
+        });
+
+        cashOutBtn.addEventListener('click', cashOut);
+        decreaseBetBtn.addEventListener('click', () => changeBet(-10));
+        increaseBetBtn.addEventListener('click', () => changeBet(10));
+        difficultySelect.addEventListener('change', () => {
+            if (!gameActive) initGame();
+        });
+        
+        playAgainBtn.addEventListener('click', () => {
+            gameOverOverlay.classList.remove('active');
+            if (balance >= currentBet) {
+                initGame();
+            }
+        });
+
+        // Initialize on load
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
